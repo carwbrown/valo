@@ -53,6 +53,25 @@
   .progress-track{flex:1;height:8px;background:var(--card);overflow:hidden;clip-path:var(--clip-sm);border:1px solid var(--border);}
   .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .35s ease;}
   .progress-label{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.06em;color:var(--cream);white-space:nowrap;}
+  .sync{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+  .user-chip{display:none;align-items:center;gap:8px;font-size:10px;letter-spacing:.04em;color:var(--muted);}
+  body.authed .user-chip{display:inline-flex;}
+  .signout{background:none;border:1px solid var(--border);color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;cursor:pointer;clip-path:var(--clip-sm);}
+  .signout:hover{color:var(--cream);border-color:var(--red);}
+
+  /* AUTH GATE */
+  .auth-gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:24px;background-image:radial-gradient(rgba(47,68,84,.25) 1px,transparent 1px);background-size:34px 34px;}
+  body.authed .auth-gate{display:none;}
+  .auth-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);padding:34px 28px;clip-path:var(--clip);text-align:center;}
+  .auth-wordmark{font-family:'Bebas Neue',sans-serif;font-size:46px;letter-spacing:.2em;line-height:1;}
+  .auth-wordmark .v,.auth-wordmark .l{color:var(--cream);} .auth-wordmark .a{color:var(--red);} .auth-wordmark .o{color:var(--teal);}
+  .auth-tag{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:5px;font-weight:700;}
+  .auth-copy{color:var(--dim);font-size:14px;margin:22px 0 16px;line-height:1.5;}
+  .auth-card input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--white);padding:11px 13px;font-size:14px;font-family:'Barlow',sans-serif;clip-path:var(--clip-sm);}
+  .auth-card input:focus{outline:none;border-color:var(--red);}
+  .auth-btn{width:100%;margin-top:11px;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.08em;background:var(--red);color:#fff;border:none;padding:12px;cursor:pointer;clip-path:var(--clip-sm);transition:background .18s ease;}
+  .auth-btn:hover{background:#ff5e6b;} .auth-btn:disabled{opacity:.55;cursor:default;}
+  .auth-msg{margin-top:14px;font-size:12.5px;color:var(--dim);min-height:16px;}
 
   /* MAIN */
   .main{padding:20px 18px;max-width:920px;margin:0 auto;}
@@ -133,6 +152,17 @@
 </head>
 <body>
 
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <div class="auth-wordmark"><span class="v">V</span><span class="a">A</span><span class="l">L</span><span class="o">O</span></div>
+    <div class="auth-tag">Rank-Up Routine</div>
+    <p class="auth-copy">Sign in to sync your routine across every device.</p>
+    <input id="authEmail" type="email" placeholder="you@email.com" autocomplete="email" inputmode="email">
+    <button class="auth-btn" id="authBtn" onclick="sendMagicLink()">Send magic link</button>
+    <div class="auth-msg" id="authMsg"></div>
+  </div>
+</div>
+
 <div class="sticky-top">
   <div class="header">
     <div class="header-top">
@@ -176,6 +206,8 @@
     <div class="progress-wrap">
       <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
       <div class="progress-label" id="progLabel">0 / 30</div>
+      <span class="sync" id="syncStatus" title="Sync status">…</span>
+      <span class="user-chip" id="userChip"><span id="authUser"></span><button class="signout" onclick="signOut()">Sign out</button></span>
     </div>
   </div>
 </div>
@@ -216,6 +248,7 @@
   <div class="footer">clarity beats volume · complete today, come back tomorrow</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ===== HTML HELPERS ===== */
 const el = id => document.getElementById(id);
@@ -494,25 +527,89 @@ const DB = (() => {
   return { get, put };
 })();
 
-async function loadSettings(){
+/* ===== SUPABASE (cloud sync; IndexedDB is the offline cache) ===== */
+const SB_URL = "https://ktbszqcjyvpljrzlldrg.supabase.co";
+const SB_KEY = "sb_publishable_-65zR1yI-FV4fYOzUeu_YA_PXCUm_Qo";
+const sb = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SB_URL, SB_KEY, { auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true } })
+  : null;
+let USER = null;  // signed-in Supabase user (null until magic-link auth)
+
+function markSync(stateName){
+  const e = el("syncStatus"); if(!e) return;
+  if(stateName === "saving"){ e.textContent = "Saving…"; e.style.color = "var(--gold)"; }
+  else if(stateName === "synced"){ e.textContent = "● Synced"; e.style.color = "var(--green)"; }
+  else { e.textContent = "○ Offline"; e.style.color = "var(--muted)"; }
+}
+async function cloudGet(id){
+  if(!sb || !USER) return { ok:false };
   try{
-    const rec = await DB.get("settings");
-    if(rec && rec.setup) state.setup = rec.setup;
-  }catch(e){ console.warn("IDB settings load failed",e); }
+    const { data, error } = await sb.from("valo_state").select("data").eq("user_id", USER.id).eq("id", id).maybeSingle();
+    if(error){ console.warn("cloudGet",id,error.message); return { ok:false }; }
+    return { ok:true, value: data ? data.data : null };
+  }catch(e){ console.warn("cloudGet",e); return { ok:false }; }
+}
+async function cloudPut(id, payload){
+  if(!sb || !USER) return false;
+  try{
+    const { error } = await sb.from("valo_state")
+      .upsert({ user_id:USER.id, id, data:payload, updated_at:new Date().toISOString() }, { onConflict:"user_id,id" });
+    if(error){ console.warn("cloudPut",id,error.message); return false; }
+    return true;
+  }catch(e){ console.warn("cloudPut",e); return false; }
+}
+
+function hydrateSetupInputs(){
   const map = {rank:"s-rank",goal:"s-goal",agent:"s-agent",start:"s-start"};
   Object.entries(map).forEach(([k,id])=>{ if(state.setup[k]) el(id).value = state.setup[k]; });
 }
-async function saveSettings(){
-  try{ await DB.put({ id:"settings", setup:state.setup }); }catch(e){ console.warn("IDB settings save failed",e); }
+
+/* ---- cache reads (IndexedDB); tolerate the old record shape ---- */
+async function loadSettingsCache(){
+  try{
+    const rec = await DB.get("settings");
+    if(rec) state.setup = rec.data || rec.setup || {};
+  }catch(e){ console.warn("IDB settings load failed",e); }
+  hydrateSetupInputs();
 }
-async function loadProgram(id){
+async function loadProgramCache(id){
   try{
     const rec = await DB.get("prog:"+id);
-    state.completed = (rec && rec.completed) ? rec.completed : [];
+    const d = rec ? (rec.data || rec) : null;
+    state.completed = (d && d.completed) ? d.completed : [];
   }catch(e){ state.completed = []; console.warn("IDB program load failed",e); }
 }
+
+/* ---- saves: write cache + cloud ---- */
+async function saveSettings(){
+  markSync("saving");
+  try{ await DB.put({ id:"settings", data:state.setup }); }catch(e){ console.warn("IDB settings save failed",e); }
+  markSync(await cloudPut("settings", state.setup) ? "synced" : "offline");
+}
 async function saveProgram(){
-  try{ await DB.put({ id:"prog:"+currentProgram, completed:state.completed }); }catch(e){ console.warn("IDB program save failed",e); }
+  markSync("saving");
+  try{ await DB.put({ id:"prog:"+currentProgram, data:{ completed:state.completed } }); }catch(e){ console.warn("IDB program save failed",e); }
+  markSync(await cloudPut("prog:"+currentProgram, { completed:state.completed }) ? "synced" : "offline");
+}
+
+/* ---- pull from cloud and reconcile (cloud wins) ---- */
+async function pullSettings(){
+  const r = await cloudGet("settings");
+  if(r.ok && r.value){ state.setup = r.value; hydrateSetupInputs(); await DB.put({ id:"settings", data:r.value }); }
+}
+async function pullProgram(id){
+  const r = await cloudGet("prog:"+id);
+  if(r.ok){
+    if(r.value && r.value.completed){
+      state.completed = r.value.completed;
+      await DB.put({ id:"prog:"+id, data:{ completed:r.value.completed } });
+      renderPicker();
+      if(selectedDay != null && el("view-detail").classList.contains("active")) syncCompleteBtn();
+    }
+    markSync("synced");
+  } else {
+    markSync("offline");
+  }
 }
 
 /* ===== PICKER ===== */
@@ -634,10 +731,11 @@ async function switchProgram(prog, btn){
   btn.classList.add('active');
   document.body.classList.toggle("mesos", prog === "mesos");
   el("subtitle").textContent = PROG.subtitle;
-  await loadProgram(prog);
+  await loadProgramCache(prog);
   buildDayList();
   renderPicker();
   showPicker();
+  pullProgram(prog);
 }
 
 /* ===== KEYBOARD: arrow-key day stepping on the detail view ===== */
@@ -652,14 +750,49 @@ document.addEventListener("keydown", e => {
 /* ===== SCROLL SHADOW ===== */
 window.addEventListener('scroll',()=>{document.querySelector('.sticky-top').classList.toggle('scrolled',window.scrollY>40);});
 
+/* ===== AUTH (magic link) ===== */
+async function sendMagicLink(){
+  const email = el("authEmail").value.trim();
+  const msg = el("authMsg");
+  if(!email){ msg.textContent = "Enter your email."; return; }
+  if(!sb){ msg.textContent = "Offline — can't sign in right now."; return; }
+  el("authBtn").disabled = true; msg.textContent = "Sending…";
+  const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: location.origin + location.pathname } });
+  el("authBtn").disabled = false;
+  msg.textContent = error ? ("Error: " + error.message) : "Check your email for a sign-in link.";
+}
+async function signOut(){ if(sb) await sb.auth.signOut(); USER = null; location.reload(); }
+function showAuthGate(){ document.body.classList.remove("authed"); }
+function showApp(){ document.body.classList.add("authed"); if(USER && el("authUser")) el("authUser").textContent = USER.email; }
+
 /* ===== INIT ===== */
-(async function init(){
+let appStarted = false;
+async function initData(){
+  if(appStarted) return;
+  appStarted = true;
   el("subtitle").textContent = PROG.subtitle;
-  await loadSettings();
-  await loadProgram(currentProgram);
+  await loadSettingsCache();
+  await loadProgramCache(currentProgram);
   buildDayList();
-  el("daySearch").addEventListener("change",handleJump);
   renderPicker();
+  // reconcile with the cloud (cloud wins), then live-sync from here on
+  await pullSettings();
+  await pullProgram(currentProgram);
+}
+function enterApp(user){ USER = user; showApp(); initData(); }
+
+(function boot(){
+  el("daySearch").addEventListener("change",handleJump);
+  const emailInput = el("authEmail");
+  if(emailInput) emailInput.addEventListener("keydown", e=>{ if(e.key === "Enter") sendMagicLink(); });
+  if(!sb){ showApp(); initData(); return; }   // library failed to load → local-only fallback
+  sb.auth.getSession().then(({ data })=>{
+    if(data.session) enterApp(data.session.user); else showAuthGate();
+  });
+  sb.auth.onAuthStateChange((_evt, session)=>{
+    if(session) enterApp(session.user);
+    else { USER = null; showAuthGate(); }
+  });
 })();
 </script>
 </body>

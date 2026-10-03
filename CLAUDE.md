@@ -23,8 +23,9 @@ switcher, GitHub-hosted). Look there for the sibling pattern.
 
 ## Stack & deploy
 
-- **Pure static site:** one `index.html` with inline `<style>` and `<script>`. Fonts from
-  Google Fonts (Barlow + Bebas Neue). No other external assets.
+- **Pure static site:** one `index.html` with inline `<style>` and `<script>`. External
+  assets are CDN-only: fonts from Google Fonts (Barlow + Bebas Neue) and
+  `@supabase/supabase-js@2` from jsDelivr. No bundler, no local deps.
 - **Host:** GitHub repo `carwbrown/valo`, deployed on **Netlify**.
 - **Netlify build settings** (static, no build):
   - Branch to deploy: `main`
@@ -65,13 +66,41 @@ switcher, GitHub-hosted). Look there for the sibling pattern.
   (`#daySearch`) — filter-as-you-type, no dependency. `handleJump()` matches full label,
   then bare day number, then title substring.
 
-## Data model (IndexedDB)
+## Data model & sync (Supabase cloud + IndexedDB cache)
 
-- DB `valo`, object store `progress` (keyPath `id`). Records:
-  - `settings` → `{ id:"settings", setup:{ rank, goal, agent, start } }` (shared across programs)
-  - `prog:slayerkey` / `prog:mesos` → `{ id, completed:[dayNumbers] }` (per-program progress)
-- All reads/writes go through the `DB` helper and the `load*/save*` functions — the only
-  place storage is touched. Swapping to a backend later means changing only those.
+**Supabase is the source of truth; IndexedDB is an offline cache.** This gives
+cross-device sync (PC ↔ phone) and durable backup, with instant local loads.
+
+- **Supabase** project `ktbszqcjyvpljrzlldrg` (`val-improve`). Table `public.valo_state`:
+  `user_id uuid` + `id text` (composite PK), `data jsonb`, `updated_at timestamptz`.
+  **RLS is per-user** — every policy is `auth.uid() = user_id`, so a signed-in user can only
+  read/write their own rows. Client is vanilla `@supabase/supabase-js@2` from CDN; the
+  **publishable key** + URL are hardcoded in `index.html` (safe — publishable keys are meant
+  for client code, and RLS is what protects the data; no build step to inject env vars).
+- **Auth: magic-link email login** (`signInWithOtp`). A full-screen `#authGate` overlay
+  blocks the app until there's a session; `onAuthStateChange` + `getSession` drive
+  `enterApp()`. Session persists (`persistSession:true`), so it's one sign-in per device.
+  `cloudGet`/`cloudPut` tag every row with `USER.id`. No `USER` → cloud calls no-op (local
+  cache still works). Redirect URLs must be allow-listed in Supabase Auth config per
+  environment (localhost + the prod Netlify URL).
+- **Records** (same `id`s in both Supabase and the IndexedDB `valo`/`progress` store; in
+  Supabase they're additionally scoped by `user_id`):
+  - `settings` → `{ id, data:{ rank, goal, agent, start } }` (shared across programs)
+  - `prog:slayerkey` / `prog:mesos` → `{ id, data:{ completed:[dayNumbers] } }` (per-program)
+- **Flow:** load renders from IndexedDB instantly, then `pullSettings`/`pullProgram`
+  reconcile from Supabase (**cloud wins**) and re-render. Saves dual-write: IndexedDB +
+  `cloudPut` upsert. A header sync chip shows `Saving… / ● Synced / ○ Offline`. Offline,
+  it degrades to the local cache and re-syncs on next successful save.
+- **Storage seam:** everything goes through the `DB` helper + `cloudGet/cloudPut` +
+  `load*Cache`/`save*`/`pull*` functions — the only place storage is touched.
+- **Security:** data is protected by per-user RLS, so the publishable key being public (in
+  the repo / on the site) is fine — nobody can read or write a user's rows without being
+  signed in as that user. Each person's progress is isolated.
+- **Email caveat:** uses Supabase's built-in email sender, which is rate-limited (a few/hour,
+  testing-grade). For reliable magic links, configure custom SMTP in Supabase Auth settings.
+- **Schema + auth config were applied via the Management API** (`supabase` CLI token →
+  `POST /v1/projects/{ref}/database/query` for DDL; `PATCH /v1/projects/{ref}/config/auth`
+  for the redirect allow-list), not the dashboard. SQL lives in scratch `valo_auth.sql`.
 
 ## Adding to the routine
 
