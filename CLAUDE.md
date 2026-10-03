@@ -27,6 +27,10 @@ switcher, GitHub-hosted). Look there for the sibling pattern.
   assets are CDN-only: fonts from Google Fonts (Barlow + Bebas Neue) and
   `@supabase/supabase-js@2` from jsDelivr. No bundler, no local deps.
 - **Host:** GitHub repo `carwbrown/valo`, deployed on **Netlify**.
+- **Live URL:** https://val-improve.netlify.app/ (auto-deploys from `main`).
+- **Supabase Auth redirect config** (must include every environment or magic links fail):
+  Site URL = `https://val-improve.netlify.app`; allow-list also has the prod `/**` wildcard
+  and `http://localhost:8765` (+`/**`) for local testing.
 - **Netlify build settings** (static, no build):
   - Branch to deploy: `main`
   - Base directory: *(blank)*
