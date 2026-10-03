@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VALO · SkyHigh Routine</title>
+<title>VALO · Rank-Up Routine</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0f1923; --surface:#111e29; --card:#1a2a38; --card2:#223345; --border:#2f4454;
     --cream:#ece8e1; --white:#ece8e1; --muted:#6f8698; --dim:#a7b7c4;
     --red:#ff4655; --teal:#19e0cf; --gold:#f0b840; --green:#4ed6a1;
+    --accent:var(--red);
     --notch:9px;
     --clip:polygon(var(--notch) 0, 100% 0, 100% calc(100% - var(--notch)), calc(100% - var(--notch)) 100%, 0 100%, 0 var(--notch));
     --clip-sm:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
@@ -17,10 +18,12 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--white);font-family:'Barlow',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
     background-image:radial-gradient(rgba(47,68,84,.25) 1px,transparent 1px);background-size:34px 34px;}
+  body.mesos{--accent:var(--teal);}
   h1,h2,h3,.bebas{font-family:'Bebas Neue',sans-serif;}
 
   /* HEADER */
   .sticky-top{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(255,70,85,.25);}
+  body.mesos .sticky-top{box-shadow:0 1px 0 rgba(25,224,207,.25);}
   .header{padding:16px 18px 14px;max-width:920px;margin:0 auto;}
   .header-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
   .wordmark{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,8vw,50px);line-height:.9;letter-spacing:.2em;display:flex;align-items:center;}
@@ -31,7 +34,7 @@
   .prog-switch{display:flex;gap:6px;align-items:center;}
   .prog-btn{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.12em;padding:6px 14px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all .18s ease;clip-path:var(--clip-sm);}
   .prog-btn:hover{color:var(--dim);border-color:#3f576a;}
-  .prog-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+  .prog-btn[data-prog="slayerkey"].active{background:var(--red);border-color:var(--red);color:#fff;}
   .prog-btn[data-prog="mesos"].active{background:var(--teal);border-color:var(--teal);color:#06231f;}
 
   /* SETUP ROW */
@@ -39,12 +42,12 @@
   @media(max-width:560px){.setup{grid-template-columns:repeat(2,1fr);}}
   .setup label{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-weight:700;}
   .setup input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--white);padding:7px 10px;font-size:13px;font-family:'Barlow',sans-serif;clip-path:var(--clip-sm);}
-  .setup input:focus{outline:none;border-color:var(--red);background:var(--card2);}
+  .setup input:focus{outline:none;border-color:var(--accent);background:var(--card2);}
 
   /* PROGRESS BAR */
   .progress-wrap{display:flex;align-items:center;gap:12px;margin-top:16px;}
   .progress-track{flex:1;height:8px;background:var(--card);overflow:hidden;clip-path:var(--clip-sm);border:1px solid var(--border);}
-  .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--gold));transition:width .35s ease;}
+  .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .35s ease;}
   .progress-label{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.06em;color:var(--cream);white-space:nowrap;}
 
   /* MAIN */
@@ -54,12 +57,13 @@
   /* DAY PICKER */
   .week-block{margin-bottom:26px;}
   .week-head{position:relative;display:flex;align-items:baseline;gap:11px;margin-bottom:13px;padding-bottom:9px;}
-  .week-head::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:linear-gradient(90deg,var(--red) 0,var(--red) 46px,var(--border) 46px,var(--border) 100%);}
-  .week-head .wk{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;color:var(--red);}
+  .week-head::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:linear-gradient(90deg,var(--accent) 0,var(--accent) 46px,var(--border) 46px,var(--border) 100%);}
+  .week-head .wk{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;color:var(--accent);}
   .week-head .wk-focus{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700;}
   .day-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:9px;}
-  .day-cell{position:relative;background:var(--card);border-top:2px solid var(--red);padding:11px 9px 12px;text-align:left;cursor:pointer;transition:transform .12s ease,background .2s ease,box-shadow .2s ease;min-height:84px;display:flex;flex-direction:column;clip-path:var(--clip);}
+  .day-cell{position:relative;background:var(--card);border-top:2px solid var(--accent);padding:11px 9px 12px;text-align:left;cursor:pointer;transition:transform .12s ease,background .2s ease,box-shadow .2s ease;min-height:84px;display:flex;flex-direction:column;clip-path:var(--clip);}
   .day-cell:hover{background:var(--card2);transform:translateY(-2px);box-shadow:0 6px 16px rgba(255,70,85,.18);}
+  body.mesos .day-cell:hover{box-shadow:0 6px 16px rgba(25,224,207,.18);}
   .day-cell .d-num{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:.85;color:var(--cream);}
   .day-cell .d-day{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700;}
   .day-cell .d-focus{font-size:11px;color:var(--dim);margin-top:7px;line-height:1.25;font-weight:500;}
@@ -67,11 +71,12 @@
   .day-cell.done .d-num{color:var(--green);}
   .day-cell .check{position:absolute;top:8px;right:9px;width:16px;height:16px;border:1px solid var(--border);font-size:10px;display:flex;align-items:center;justify-content:center;color:transparent;clip-path:var(--clip-sm);}
   .day-cell.done .check{background:var(--green);border-color:var(--green);color:var(--bg);}
+  .day-cell .d-bench{position:absolute;top:8px;left:9px;font-size:7px;letter-spacing:.12em;font-weight:700;color:var(--gold);}
 
   /* DETAIL TOP ROW */
   .detail-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
   .back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer;padding:9px 13px;clip-path:var(--clip-sm);transition:all .18s ease;}
-  .back-btn:hover{color:var(--cream);border-color:var(--red);}
+  .back-btn:hover{color:var(--cream);border-color:var(--accent);}
   .jump{position:relative;flex:1;min-width:190px;}
   .jump input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--white);padding:9px 12px 9px 30px;font-size:13px;font-family:'Barlow',sans-serif;clip-path:var(--clip-sm);}
   .jump input:focus{outline:none;border-color:var(--teal);background:var(--card2);}
@@ -79,7 +84,7 @@
 
   /* DETAIL HEAD */
   .detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:4px;}
-  .detail-title .d-eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700;}
+  .detail-title .d-eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:700;}
   .detail-title h2{font-size:38px;letter-spacing:.04em;line-height:1;margin-top:4px;color:var(--cream);}
   .complete-btn{font-family:'Bebas Neue',sans-serif;background:var(--cream);border:1px solid var(--cream);color:#0f1923;font-size:17px;letter-spacing:.08em;padding:9px 18px;cursor:pointer;white-space:nowrap;transition:all .18s ease;clip-path:var(--clip-sm);}
   .complete-btn:hover{background:#fff;}
@@ -89,7 +94,8 @@
   .tabs{display:flex;gap:5px;margin:18px 0 20px;background:var(--surface);border:1px solid var(--border);padding:5px;clip-path:var(--clip);}
   .tab{flex:1;padding:11px 8px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.12em;color:var(--muted);cursor:pointer;border:none;background:none;transition:all .18s ease;clip-path:var(--clip-sm);}
   .tab:hover{color:var(--dim);}
-  .tab.active{background:var(--red);color:#fff;}
+  .tab.active{background:var(--accent);color:#fff;}
+  body.mesos .tab.active{color:#06231f;}
 
   .panel{display:none;} .panel.active{display:block;animation:fade .2s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
@@ -97,7 +103,7 @@
   /* CARDS */
   .card{background:var(--card);padding:15px 17px;margin-bottom:11px;border-left:3px solid var(--teal);clip-path:var(--clip);}
   .card.red{border-left-color:var(--red);} .card.gold{border-left-color:var(--gold);} .card.green{border-left-color:var(--green);}
-  .card h3{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.06em;color:var(--cream);margin-bottom:6px;display:flex;align-items:center;gap:9px;}
+  .card h3{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.06em;color:var(--cream);margin-bottom:6px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
   .card .tag{font-family:'Barlow',sans-serif;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:2px 7px;clip-path:var(--clip-sm);}
   .card p{color:var(--dim);font-size:14px;}
   .card p + p{margin-top:7px;}
@@ -105,17 +111,13 @@
   .card .lead-grid b{color:var(--teal);font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.04em;}
   .card ul{list-style:none;margin-top:6px;}
   .card ul li{color:var(--dim);font-size:14px;padding-left:17px;position:relative;margin-bottom:5px;}
-  .card ul li::before{content:"\25B8";position:absolute;left:0;color:var(--red);font-weight:700;}
+  .card ul li::before{content:"\25B8";position:absolute;left:0;color:var(--accent);font-weight:700;}
   .card ul li b{color:var(--cream);}
 
   .panel-intro{font-size:13px;color:var(--dim);margin-bottom:15px;line-height:1.55;background:var(--surface);border-left:2px solid var(--muted);padding:12px 15px;clip-path:var(--clip);}
   .panel-intro b{color:var(--cream);}
   .section-label{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:6px 0 11px;display:flex;align-items:center;gap:9px;}
-  .section-label::before{content:"";width:9px;height:9px;background:var(--red);clip-path:polygon(0 0,100% 0,100% 100%);}
-
-  .coming-soon{text-align:center;padding:70px 20px;color:var(--muted);}
-  .coming-soon .cs-big{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:.1em;color:var(--teal);}
-  .coming-soon p{margin-top:10px;font-size:14px;}
+  .section-label::before{content:"";width:9px;height:9px;background:var(--accent);clip-path:polygon(0 0,100% 0,100% 100%);}
 
   .footer{text-align:center;color:var(--muted);font-size:10px;padding:26px 0 34px;letter-spacing:.14em;text-transform:uppercase;}
 </style>
@@ -127,7 +129,7 @@
     <div class="header-top">
       <div>
         <div class="wordmark"><span class="v">V</span><span class="a">A</span><span class="l">L</span><span class="o">O</span></div>
-        <div class="subtitle" id="subtitle">Slayerkey's SkyHigh Routine · 30-Day Rank-Up</div>
+        <div class="subtitle" id="subtitle"></div>
       </div>
       <div class="prog-switch">
         <button class="prog-btn active" data-prog="slayerkey" onclick="switchProgram('slayerkey',this)">Slayerkey</button>
@@ -150,10 +152,8 @@
 </div>
 
 <div class="main">
-  <!-- DAY PICKER -->
   <div class="view active" id="view-picker"></div>
 
-  <!-- DAY DETAIL -->
   <div class="view" id="view-detail">
     <div class="detail-top">
       <button class="back-btn" onclick="showPicker()">‹ All Days</button>
@@ -183,16 +183,36 @@
 </div>
 
 <script>
-/* ---------------- DATA: SLAYERKEY ---------------- */
-const WEEKS = [
-  { n:1, focus:"Fundamentals", days:[1,2,3,4,5,6,7] },
+/* ===== HTML HELPERS ===== */
+const el = id => document.getElementById(id);
+const C  = (h, body='', cls='') => `<div class="card ${cls}"><h3>${h}</h3>${body}</div>`;
+const P  = t => `<p>${t}</p>`;
+const UL = items => `<ul>${items.map(i=>`<li>${i}</li>`).join("")}</ul>`;
+const L  = t => `<div class="section-label">${t}</div>`;
+const I  = t => `<div class="panel-intro">${t}</div>`;
+const TAG = t => `<span class="tag">${t}</span>`;
+
+/* Shared reference block (both programs) */
+function refSection(){
+  return L("Reference")
+    + C("Rule of 2", UL([`<b>Down by 2:</b> look for a fight.`, `<b>Up by 2:</b> play off your teammates.`]))
+    + C("LEAD Method",
+        P(`At the start of every round, ask what each of these tells you about the plan:`)
+        + `<div class="lead-grid"><b>L</b><span>Last round — what did they do?</span><b>E</b><span>Economy — what can each side buy?</span><b>A</b><span>Abilities — what's up, what's spent?</span><b>D</b><span>Direction — where is the round going?</span></div>`)
+    + C("2SS", P(`Two-shot burst, strafe, two-shot burst, strafe. Stay accurate without becoming stationary.`));
+}
+
+/* ======================================================================
+   PROGRAM: SLAYERKEY
+   ====================================================================== */
+const SK_WEEKS = [
+  { n:1, focus:"Fundamentals",   days:[1,2,3,4,5,6,7] },
   { n:2, focus:"Fighting Style", days:[8,9,10,11,12,13,14] },
-  { n:3, focus:"Game Sense", days:[15,16,17,18,19,20,21] },
-  { n:4, focus:"Mental", days:[22,23,24,25,26,27,28] },
+  { n:3, focus:"Game Sense",     days:[15,16,17,18,19,20,21] },
+  { n:4, focus:"Mental",         days:[22,23,24,25,26,27,28] },
   { n:5, focus:"Finish the Loop", label:"Days 29–30", days:[29,30] },
 ];
-
-const SLAYERKEY_DAYS = {
+const SK_DAYS = {
   1:{t:"Pick Your Agent", a:"Choose one agent you enjoy or have wanted to learn. Commit to that agent for the routine instead of changing after bad games."},
   2:{t:"Review Your Tracker", a:"Look at games played and win rate first. If you have 20+ games this act or last act, identify which maps are costing you the most."},
   3:{t:"Find a Duo", a:"Find someone around your rank who actually wants to improve. Prioritize consistency and shared goals over finding a “perfect” teammate."},
@@ -224,38 +244,188 @@ const SLAYERKEY_DAYS = {
   29:{t:"Final Review", a:"Review one recent match. Compare your fighting, decisions, awareness, and mental to the beginning of the month. Write down the single biggest change."},
   30:{t:"Build Your Next 30 Days", a:"Check your rank, Tracker, notes, and VODs. Pick the next problem that matters most. Keep the game-day loop and start a new cycle instead of going back to random grinding."},
 };
-
-// Weekly intro note shown in In Game (by week number)
-const WEEK_NOTE = {
+const SK_WEEK_NOTE = {
   2:"Daily base: 1 Sheriff DM focused on crosshair placement and clean first shots + 1 Vandal DM focused on 2SS. Refresh your normal warm-up and add clock-flick practice when useful.",
   3:"This week is about creating better fights without needing better mechanics. Your four lenses are: <b>minimap, abilities, teammates, and timings.</b>",
   4:"Journal before and after you play. <b>Before:</b> How do I feel right now? <b>After:</b> What did I experience, and what do I want to do differently next time?",
 };
-
-const CHECKIN_DAYS = {7:true,14:true,21:true,28:true};
-
-const WARMUP_DRILLS = [
+const SK_CHECKIN = {7:1,14:1,21:1,28:1};
+const SK_WARMUP = [
   { n:"2SS Practice", d:"Two-shot burst, strafe, two-shot burst, strafe. Build the rhythm before you build the speed." },
   { n:"2SS — Standing Bots", d:"Run your 2SS on standing bots. Clean bursts, reset the crosshair between each." },
   { n:"Medium Bots — Strafing", d:"Medium-range bots. Keep moving: fire your bursts while strafing, not planted." },
   { n:"Eliminate 50 — Strafe Bots", d:"Eliminate 50 on strafing bots, strafing the whole time. Accurate, not stationary." },
 ];
+const SK_STUDY = ["VOD review","Customs","Duo practice","Entry practice","One pro VOD on your agent"];
 
-const STUDY_OPTIONS = [
-  "VOD review","Customs","Duo practice","Entry practice","One pro VOD on your agent",
+const SLAYERKEY = {
+  id:"slayerkey",
+  subtitle:"Slayerkey's SkyHigh Routine · 30-Day Rank-Up",
+  weeks:SK_WEEKS, days:SK_DAYS,
+  warmup(){
+    return I(`Same warm-up every day. Build the rhythm first, speed second — then at minimum one Deathmatch before Competitive.`)
+      + L("Slayerkey Warm-Up")
+      + SK_WARMUP.map(x=>C(x.n, P(x.d))).join("");
+  },
+  ingame(day,info,w){
+    let h = L("Today's Goal") + C(info.t, P(info.a), "red");
+    if(SK_WEEK_NOTE[w.n]) h += I(SK_WEEK_NOTE[w.n]);
+    if(SK_CHECKIN[day]){
+      h += C("Weekly Check-In " + TAG("end of week"), UL([
+        "What improved this week?","What mistake keeps repeating?",
+        "What is the ONE focus for next week?","Do I need outside feedback to see what I am missing?",
+      ]), "gold");
+    }
+    h += refSection();
+    h += L("Game-Day Loop") + C("Prep → Play → Reset", UL([
+      `<b>Prep:</b> pick one focus for the session.`,
+      `<b>Play:</b> ~2–3 Competitive games. Same agent, same 1–2 goals — don't rebuild the plan after one bad game.`,
+      `<b>Reset:</b> short break. How am I doing on what I said I'd work on? What could I do differently?`,
+    ]), "green");
+    return h;
+  },
+  training(day){
+    let h = I(`The Study block — only if you have time. One useful block, not random homework.`);
+    if([15,17,19,21].includes(day)) h += L("Today Is A Study Day") + C(SK_DAYS[day].t, P(SK_DAYS[day].a), "red");
+    h += L("Pick One") + SK_STUDY.map(o=>C(o)).join("");
+    return h;
+  },
+};
+
+/* ======================================================================
+   PROGRAM: MESOS  (from your improvement plan + if-then plans)
+   ====================================================================== */
+const MS_WEEKS = [
+  { n:1, focus:"Pre-Round Habit",  days:[1,2,3,4,5,6,7] },
+  { n:2, focus:"Kill the Bad Days", days:[8,9,10,11,12,13,14] },
+  { n:3, focus:"Game Sense",       days:[15,16,17,18,19,20,21] },
+  { n:4, focus:"Lock It In",       days:[22,23,24,25,26,27,28] },
+  { n:5, focus:"Finish", label:"Days 29–30", days:[29,30] },
+];
+const MS_DAYS = {
+  1:{t:"Say the round plan out loud", a:"Say the round plan out loud in the buy phase. Every round.", date:"Mon 9/28"},
+  2:{t:"Call the range before every peek", a:"Call the range before every peek: close, mid, long.", date:"Tue 9/29"},
+  3:{t:"LEAD — last round", a:"LEAD — what did they do last round?", date:"Wed 9/30"},
+  4:{t:"Rule of 2 — down two", a:"Rule of 2 — down two, go find a fight.", date:"Thu 10/1"},
+  5:{t:"Rule of 2 — up two", a:"Rule of 2 — up two, play off your teammates.", date:"Fri 10/2"},
+  6:{t:"Stop-rule day", a:"Stop-rule day: the first sign of tilt, close the client.", date:"Sat 10/3"},
+  7:{t:"Benchmark Sunday", a:"Full Voltaic run, clip review, and the weekly check-in.", date:"Sun 10/4", bench:true},
+  8:{t:"New round, new me", a:"Between every round: “new round, new me.”", date:"Mon 10/5"},
+  9:{t:"Set your stop-rule line", a:"Set your stop-rule line before queueing. Honor it.", date:"Tue 10/6"},
+  10:{t:"Play off teammates", a:"Play off teammates — trade the aggressive one, no solo peeks.", date:"Wed 10/7"},
+  11:{t:"One clean fight at a time", a:"One clean fight at a time — find the one, isolate it.", date:"Thu 10/8"},
+  12:{t:"Name the trigger", a:"Notice the round your mental slips. Name the trigger.", date:"Fri 10/9"},
+  13:{t:"Full system together", a:"Full standing rules + range system together.", date:"Sat 10/10"},
+  14:{t:"Benchmark Sunday", a:"Full Voltaic run, clip review, and the weekly check-in.", date:"Sun 10/11", bench:true},
+  15:{t:"Peek, stop, scan", a:"Peek, stop, scan. Don't clear past heads.", date:"Mon 10/12"},
+  16:{t:"Chunk angles", a:"Chunk angles: step wide, peek one slice at a time.", date:"Tue 10/13"},
+  17:{t:"Hold width from info", a:"Hold width from info: noise → wide, silence → close.", date:"Wed 10/14"},
+  18:{t:"Study a pro VOD", a:"Study one pro VOD on your agent — minimap, util, timings.", date:"Thu 10/15"},
+  19:{t:"Own VOD review", a:"Own VOD review with LEAD on 3 lost rounds.", date:"Fri 10/16"},
+  20:{t:"Apply the one fix", a:"Apply the one game-sense fix you found.", date:"Sat 10/17"},
+  21:{t:"Benchmark Sunday", a:"Full Voltaic run, clip review, and the weekly check-in.", date:"Sun 10/18", bench:true},
+  22:{t:"Your #1 leak", a:"Your #1 leak from Sunday.", date:"Mon 10/19"},
+  23:{t:"Your #1 leak", a:"Same — keep working your #1 leak.", date:"Tue 10/20"},
+  24:{t:"Your #2 leak", a:"Your #2 leak.", date:"Wed 10/21"},
+  25:{t:"Your #2 leak", a:"Same — keep working your #2 leak.", date:"Thu 10/22"},
+  26:{t:"Rules on autopilot", a:"Standing rules on autopilot — no conscious effort.", date:"Fri 10/23"},
+  27:{t:"Everything", a:"Everything together.", date:"Sat 10/24"},
+  28:{t:"Benchmark Sunday", a:"Full Voltaic run, clip review, and the weekly check-in.", date:"Sun 10/25", bench:true},
+  29:{t:"Final review", a:"Final review: send clips, compare to day 1.", date:"Mon 10/26"},
+  30:{t:"Set the next 30 days", a:"Set the next 30 days.", date:"Tue 10/27"},
+};
+const MS_WARMUP = [
+  { n:"Moving shots", w:"Vandal", time:"1.5 min", d:"Bots in the middle. Move, stop, shoot, move again. Slow and clean, then faster." },
+  { n:"Two-bot flicks", w:"Ghost", time:"1.5 min", d:"Flick between two heads: fast first move that lands a little short, small correction, click." },
+  { n:"Valyn strafe-bot sequence", w:"Vandal", time:"2 min", d:"Strafe bots on. Eyes lock each head and stay locked through the shot. Track a head → flick to another and pick tracking back up → track, then flick and shoot." },
+  { n:"Strafe bots, Eliminate 50", w:"Sheriff / Guardian", time:"1.5 min", d:"One-shot weapon on moving targets. Wait for the head, one clean shot." },
+  { n:"Gunfight hygiene by distance", w:"Vandal", time:"2 min", d:"Work the distances: close = spray and move, mid = 2SS, long = one tap. Keep the Shooting Error graph orange." },
+  { n:"Medium bots", w:"Sheriff / Guardian", time:"1.5 min", d:"One shot per bot with a one-shot weapon. First-bullet accuracy under mild time pressure." },
+  { n:"Deathmatch", w:"Vandal → Sheriff", time:"~9 min", d:"Vandal most of it, Sheriff for the last couple minutes. Pre-aim slightly wider than the wall; call the range before every fight. Don't play it to win." },
 ];
 
-const DETAIL_ID = "slayerkey"; // active program
+const MESOS = {
+  id:"mesos",
+  subtitle:"Mesos Plan · Consistency-First 30-Day Rank-Up",
+  weeks:MS_WEEKS, days:MS_DAYS,
+  warmup(){
+    let h = I(`About 19 minutes. While the game loads: wrist circles, open and close your hands a few times, loosen your grip.`);
+    h += L("Warm-Up — 7 Drills");
+    h += MS_WARMUP.map(x=>C(x.n + " " + TAG(x.w + " · " + x.time), P(x.d))).join("");
+    h += L("How To Fight — By Range");
+    h += C("0–5 m", P(`Spray and keep moving. Crouch sometimes — not every fight.`));
+    h += C("5–30 m", P(`2SS — two-round burst, strafe, repeat. Shooting Error graph stays orange.`));
+    h += C("30 m +", P(`One taps, small strafes. No follow-up spray.`));
+    return h;
+  },
+  ingame(day,info,w){
+    let h = L("Today's Comp Focus") + C(info.t, P(info.a), "red");
+    h += L("Daily Standing Rules");
+    h += C("1 · One-Sentence Plan", P(`Every round, in the buy phase: “This round I ___.” Beats autopilot.`));
+    h += C("2 · Stop Rule", P(`Decide your line before you queue. The moment you're tilted or not thinking clearly, close the client. A prevented −50 day beats a won game.`), "red");
+    h += C("3 · New Round, New Me", P(`Lose a round → say it → reset before the barrier drops. Don't carry the last round into the next.`));
+    h += L("If-Then Plans");
+    h += C("Install one or two at a time", UL([
+      `★ <b>When the buy phase starts,</b> I run LEAD and say one sentence out loud.`,
+      `★ <b>When I notice I'm tilted or not thinking clearly,</b> I close the client.`,
+      `<b>When I lose a round,</b> I say “new round, new me” and reset.`,
+      `<b>When an enemy appears,</b> I pull to the head and let the shot break — I don't click first.`,
+      `<b>When I take a rifle fight,</b> I fire two, then strafe — two, then strafe.`,
+      `<b>When the enemy is far (30 m+),</b> I take one tap and don't follow it up.`,
+      `<b>When I peek an angle,</b> I stop and scan before moving to the next.`,
+      `<b>When I'm down two,</b> I make something happen; <b>up two,</b> I play off my teammates.`,
+    ]), "gold");
+    h += refSection();
+    h += L("Playing With Intention");
+    h += C("Decisions live in the buy phase — not the duel", UL([
+      `<b>Buy phase (10 s):</b> run LEAD, say the one-sentence plan.`,
+      `<b>Before each peek:</b> one word — close, mid, or long.`,
+      `<b>During the duel:</b> nothing. Let the trained response fire.`,
+      `<b>Autopilot?</b> Don't grind harder — break, then restart with the pre-round sentence.`,
+    ]), "green");
+    return h;
+  },
+  training(day,info){
+    if(info.bench){
+      let h = I(`Benchmark Sunday — the weekly measure. Then clip review and the check-in.`);
+      h += L("Benchmark Sunday");
+      h += C("1 · Warm Up", P(`Your normal warm-up.`));
+      h += C("2 · Full Voltaic Run", P(`Voltaic Valorant S1 Intermediate. Record energy and anything that crossed a threshold.`));
+      h += C("3 · Clip Review", P(`Send 5–10 clips — lost duels especially (bullets/engagement, mouse movement on the shot frame, movement error).`));
+      h += C("4 · Label Each Lost Duel", UL([
+        `<b>Good setup, missed</b> → reaction drill (maintenance).`,
+        `<b>Bad setup, big flick</b> → crosshair placement, angle chunking.`,
+        `<b>No clean fight</b> → positioning / util / game sense — run LEAD + Rule of 2.`,
+      ]));
+      h += C("5 · Consistency Review", P(`What was my worst game this week — and did I keep playing when I should have stopped?`));
+      h += C("6 · Weekly Check-In " + TAG("4 questions"), UL([
+        "What improved this week?","What mistake keeps repeating?",
+        "What is the ONE focus for next week?","Do I need outside feedback?",
+      ]), "gold");
+      return h;
+    }
+    let h = I(`Mechanics are maintained, not ground. ~10 minutes after comp — <b>never during.</b> Working the low Voltaic numbers.`);
+    h += L("Mechanics Maintenance — KovaaK's / Voltaic");
+    h += C("Reaction Drill " + TAG("5 min"), P(`Hold your 0.6 sweet spot; try to beat it (85%+). The engine under your first-bullet fix.`));
+    h += C("VT MiniTS " + TAG("3 min"), P(`One point to the floor (95). Close it out, then rotate it out.`));
+    h += C("VT Skyclick Multi " + TAG("2 min · optional"), P(`Cleared — light touch to hold it, or give the time back to comp / VOD review.`));
+    return h;
+  },
+};
 
-/* ---------------- STATE ---------------- */
-let state = { completed:[], setup:{} };
+const PROGRAMS = { slayerkey:SLAYERKEY, mesos:MESOS };
+
+/* ===== STATE ===== */
+let currentProgram = "slayerkey";
+let PROG = PROGRAMS[currentProgram];
+let state = { setup:{}, completed:[] };
 let selectedDay = null;
 
-function weekOf(day){ return WEEKS.find(w => w.days.includes(day)); }
-function focusKeyword(day){ return SLAYERKEY_DAYS[day] ? SLAYERKEY_DAYS[day].t : ""; }
-function dayLabel(d){ return `Day ${d} — ${SLAYERKEY_DAYS[d].t}`; }
+function weekOf(day){ return PROG.weeks.find(w => w.days.includes(day)); }
+function focusKeyword(day){ return PROG.days[day] ? PROG.days[day].t : ""; }
+function dayLabel(d){ return `Day ${d} — ${PROG.days[d].t}`; }
 
-/* ---------------- INDEXEDDB (store: progress) ---------------- */
+/* ===== INDEXEDDB ===== */
 const DB = (() => {
   let dbp;
   function open(){
@@ -290,23 +460,30 @@ const DB = (() => {
   return { get, put };
 })();
 
-async function loadState(){
+async function loadSettings(){
   try{
-    const rec = await DB.get(DETAIL_ID);
-    if(rec){ state.completed = rec.completed||[]; state.setup = rec.setup||{}; }
-  }catch(e){ console.warn("IDB load failed",e); }
+    const rec = await DB.get("settings");
+    if(rec && rec.setup) state.setup = rec.setup;
+  }catch(e){ console.warn("IDB settings load failed",e); }
   const map = {rank:"s-rank",goal:"s-goal",agent:"s-agent",start:"s-start"};
-  Object.entries(map).forEach(([k,id])=>{ if(state.setup[k]) document.getElementById(id).value = state.setup[k]; });
+  Object.entries(map).forEach(([k,id])=>{ if(state.setup[k]) el(id).value = state.setup[k]; });
 }
-async function saveState(){
-  try{ await DB.put({ id:DETAIL_ID, completed:state.completed, setup:state.setup }); }
-  catch(e){ console.warn("IDB save failed",e); }
+async function saveSettings(){
+  try{ await DB.put({ id:"settings", setup:state.setup }); }catch(e){ console.warn("IDB settings save failed",e); }
+}
+async function loadProgram(id){
+  try{
+    const rec = await DB.get("prog:"+id);
+    state.completed = (rec && rec.completed) ? rec.completed : [];
+  }catch(e){ state.completed = []; console.warn("IDB program load failed",e); }
+}
+async function saveProgram(){
+  try{ await DB.put({ id:"prog:"+currentProgram, completed:state.completed }); }catch(e){ console.warn("IDB program save failed",e); }
 }
 
-/* ---------------- RENDER: PICKER ---------------- */
+/* ===== PICKER ===== */
 function renderPicker(){
-  const root = document.getElementById("view-picker");
-  root.innerHTML = WEEKS.map(w=>`
+  el("view-picker").innerHTML = PROG.weeks.map(w=>`
     <div class="week-block">
       <div class="week-head">
         <span class="wk">${w.label||("Week "+w.n)}</span>
@@ -315,8 +492,9 @@ function renderPicker(){
       <div class="day-grid">
         ${w.days.map(d=>{
           const done = state.completed.includes(d);
+          const bench = PROG.days[d].bench ? `<span class="d-bench">BENCH</span>` : "";
           return `<button class="day-cell ${done?'done':''}" onclick="openDay(${d})">
-            <span class="check">✓</span>
+            ${bench}<span class="check">✓</span>
             <span class="d-day">Day</span>
             <span class="d-num">${d}</span>
             <span class="d-focus">${focusKeyword(d)}</span>
@@ -326,125 +504,69 @@ function renderPicker(){
     </div>`).join("");
   updateProgress();
 }
-
 function updateProgress(){
   const n = state.completed.length;
-  document.getElementById("progFill").style.width = (n/30*100)+"%";
-  document.getElementById("progLabel").textContent = n+" / 30";
+  el("progFill").style.width = (n/30*100)+"%";
+  el("progLabel").textContent = n+" / 30";
 }
 
-/* ---------------- RENDER: DETAIL ---------------- */
+/* ===== DETAIL ===== */
 function openDay(day){
   selectedDay = day;
-  const info = SLAYERKEY_DAYS[day];
+  const info = PROG.days[day];
   const w = weekOf(day);
-  document.getElementById("d-eyebrow").textContent = `Day ${day} · ${w.label||("Week "+w.n)} · ${w.focus}`;
-  document.getElementById("d-title").textContent = info.t;
-  document.getElementById("daySearch").value = "";
-  document.getElementById("daySearch").placeholder = `Now: Day ${day} — jump to another…`;
-  renderWarmup();
-  renderInGame(day,info,w);
-  renderTraining(day,w);
+  const date = info.date ? ` · ${info.date}` : "";
+  el("d-eyebrow").textContent = `Day ${day}${date} · ${w.label||("Week "+w.n)} · ${w.focus}`;
+  el("d-title").textContent = info.t;
+  el("daySearch").value = "";
+  el("daySearch").placeholder = `Now: Day ${day} — jump to another…`;
+  el("panel-warmup").innerHTML   = PROG.warmup(day,info,w);
+  el("panel-ingame").innerHTML   = PROG.ingame(day,info,w);
+  el("panel-training").innerHTML = PROG.training(day,info,w);
   showTab("ingame", document.querySelector('.tab[data-tab="ingame"]'));
   syncCompleteBtn();
-  document.getElementById("view-picker").classList.remove("active");
-  document.getElementById("view-detail").classList.add("active");
+  el("view-picker").classList.remove("active");
+  el("view-detail").classList.add("active");
   window.scrollTo({top:0,behavior:"instant"});
 }
 
-function renderWarmup(){
-  document.getElementById("panel-warmup").innerHTML = `
-    <div class="panel-intro">Same warm-up every day. Build the rhythm first, speed second — then at minimum one Deathmatch before Competitive.</div>
-    <div class="section-label">Slayerkey Warm-Up</div>
-    ${WARMUP_DRILLS.map(x=>`<div class="card"><h3>${x.n}</h3><p>${x.d}</p></div>`).join("")}`;
-}
-
-function renderInGame(day,info,w){
-  let html = "";
-  html += `<div class="section-label">Today's Goal</div>
-    <div class="card red"><h3>${info.t}</h3><p>${info.a}</p></div>`;
-  if(WEEK_NOTE[w.n]) html += `<div class="panel-intro">${WEEK_NOTE[w.n]}</div>`;
-  if(CHECKIN_DAYS[day]){
-    html += `<div class="card gold"><h3>Weekly Check-In <span class="tag">end of week</span></h3>
-      <ul>
-        <li>What improved this week?</li>
-        <li>What mistake keeps repeating?</li>
-        <li>What is the ONE focus for next week?</li>
-        <li>Do I need outside feedback to see what I am missing?</li>
-      </ul></div>`;
-  }
-  html += `<div class="section-label">Reference</div>
-    <div class="card"><h3>Rule of 2</h3>
-      <ul><li><b>Down by 2:</b> look for a fight.</li><li><b>Up by 2:</b> play off your teammates.</li></ul></div>
-    <div class="card"><h3>LEAD Method</h3>
-      <p>At the start of every round, ask what each of these tells you about the plan:</p>
-      <div class="lead-grid">
-        <b>L</b><span>Last round — what did they do?</span>
-        <b>E</b><span>Economy — what can each side buy?</span>
-        <b>A</b><span>Abilities — what's up, what's spent?</span>
-        <b>D</b><span>Direction — where is the round going?</span>
-      </div></div>
-    <div class="card"><h3>2SS</h3><p>Two-shot burst, strafe, two-shot burst, strafe. Stay accurate without becoming stationary.</p></div>
-    <div class="section-label">Game-Day Loop</div>
-    <div class="card green"><h3>Prep → Play → Reset</h3>
-      <ul>
-        <li><b>Prep:</b> pick one focus for the session.</li>
-        <li><b>Play:</b> ~2–3 Competitive games. Same agent, same 1–2 goals — don't rebuild the plan after one bad game.</li>
-        <li><b>Reset:</b> short break. How am I doing on what I said I'd work on? What could I do differently?</li>
-      </ul></div>`;
-  document.getElementById("panel-ingame").innerHTML = html;
-}
-
-function renderTraining(day,w){
-  let html = `<div class="panel-intro">The Study block — only if you have time. One useful block, not random homework.</div>`;
-  const isVodDay = [15,17,19,21].includes(day);
-  if(isVodDay){
-    html += `<div class="section-label">Today Is A Study Day</div>
-      <div class="card red"><h3>${SLAYERKEY_DAYS[day].t}</h3><p>${SLAYERKEY_DAYS[day].a}</p></div>`;
-  }
-  html += `<div class="section-label">Pick One</div>`;
-  html += STUDY_OPTIONS.map(o=>`<div class="card"><h3>${o}</h3></div>`).join("");
-  document.getElementById("panel-training").innerHTML = html;
-}
-
-/* ---------------- TABS / NAV ---------------- */
+/* ===== TABS / NAV ===== */
 function showTab(id, btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
+  el('panel-'+id).classList.add('active');
   if(btn) btn.classList.add('active');
 }
 function showPicker(){
-  document.getElementById("view-detail").classList.remove("active");
-  document.getElementById("view-picker").classList.add("active");
+  el("view-detail").classList.remove("active");
+  el("view-picker").classList.add("active");
   window.scrollTo({top:0,behavior:"instant"});
 }
 
-/* ---------------- DAY JUMP (searchable) ---------------- */
+/* ===== DAY JUMP (searchable) ===== */
 function buildDayList(){
-  document.getElementById("dayList").innerHTML =
-    Object.keys(SLAYERKEY_DAYS).map(d=>`<option value="${dayLabel(d)}"></option>`).join("");
+  el("dayList").innerHTML = Object.keys(PROG.days).map(d=>`<option value="${dayLabel(d)}"></option>`).join("");
 }
 function handleJump(){
-  const el = document.getElementById("daySearch");
-  const v = el.value.trim();
+  const input = el("daySearch");
+  const v = input.value.trim();
   if(!v) return;
-  let match = Object.keys(SLAYERKEY_DAYS).find(d => dayLabel(d) === v);
+  let match = Object.keys(PROG.days).find(d => dayLabel(d) === v);
   if(!match){
     const num = v.match(/\d+/);
-    if(num && SLAYERKEY_DAYS[num[0]]) match = num[0];
+    if(num && PROG.days[num[0]]) match = num[0];
   }
   if(!match){
     const low = v.toLowerCase();
-    match = Object.keys(SLAYERKEY_DAYS).find(d => SLAYERKEY_DAYS[d].t.toLowerCase().includes(low));
+    match = Object.keys(PROG.days).find(d => PROG.days[d].t.toLowerCase().includes(low));
   }
-  if(match) openDay(Number(match)); else el.value = "";
+  if(match) openDay(Number(match)); else input.value = "";
 }
 
-/* ---------------- COMPLETE ---------------- */
+/* ===== COMPLETE ===== */
 function syncCompleteBtn(){
   const done = state.completed.includes(selectedDay);
-  const btn = document.getElementById("completeBtn");
+  const btn = el("completeBtn");
   btn.classList.toggle("done",done);
   btn.textContent = done ? "✓ Completed" : "Mark Complete";
 }
@@ -453,42 +575,39 @@ async function toggleComplete(){
   if(i>=0) state.completed.splice(i,1); else state.completed.push(selectedDay);
   syncCompleteBtn();
   renderPicker();
-  await saveState();
+  await saveProgram();
 }
 
-/* ---------------- SETUP INPUTS ---------------- */
+/* ===== SETUP INPUTS ===== */
 ["rank","goal","agent","start"].forEach(k=>{
-  document.getElementById("s-"+k).addEventListener("input",e=>{
-    state.setup[k]=e.target.value; saveState();
-  });
+  el("s-"+k).addEventListener("input",e=>{ state.setup[k]=e.target.value; saveSettings(); });
 });
 
-/* ---------------- PROGRAM SWITCHER ---------------- */
-function switchProgram(prog, btn){
+/* ===== PROGRAM SWITCHER ===== */
+async function switchProgram(prog, btn){
+  if(prog === currentProgram && el("view-picker").classList.contains("active")) return;
+  currentProgram = prog;
+  PROG = PROGRAMS[prog];
   document.querySelectorAll('.prog-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(prog==="mesos"){
-    document.getElementById("subtitle").textContent = "Mesos Plan · based on your improvement doc";
-    document.getElementById("view-picker").innerHTML =
-      `<div class="coming-soon"><div class="cs-big">Mesos — Coming Soon</div>
-       <p>v2 will add your 7-drill warm-up, if-then plans, KovaaK's drills,<br>and Voltaic benchmark tracking.</p></div>`;
-    document.getElementById("view-detail").classList.remove("active");
-    document.getElementById("view-picker").classList.add("active");
-  } else {
-    document.getElementById("subtitle").textContent = "Slayerkey's SkyHigh Routine · 30-Day Rank-Up";
-    renderPicker();
-    showPicker();
-  }
+  document.body.classList.toggle("mesos", prog === "mesos");
+  el("subtitle").textContent = PROG.subtitle;
+  await loadProgram(prog);
+  buildDayList();
+  renderPicker();
+  showPicker();
 }
 
-/* ---------------- SCROLL SHADOW ---------------- */
+/* ===== SCROLL SHADOW ===== */
 window.addEventListener('scroll',()=>{document.querySelector('.sticky-top').classList.toggle('scrolled',window.scrollY>40);});
 
-/* ---------------- INIT ---------------- */
+/* ===== INIT ===== */
 (async function init(){
-  await loadState();
+  el("subtitle").textContent = PROG.subtitle;
+  await loadSettings();
+  await loadProgram(currentProgram);
   buildDayList();
-  document.getElementById("daySearch").addEventListener("change",handleJump);
+  el("daySearch").addEventListener("change",handleJump);
   renderPicker();
 })();
 </script>
