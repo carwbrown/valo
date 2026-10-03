@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALO · SkyHigh Routine</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1923; --surface:#111e29; --card:#1a2a38; --card2:#223345; --border:#2f4454;
+    --cream:#ece8e1; --white:#ece8e1; --muted:#6f8698; --dim:#a7b7c4;
+    --red:#ff4655; --teal:#19e0cf; --gold:#f0b840; --green:#4ed6a1;
+    --notch:9px;
+    --clip:polygon(var(--notch) 0, 100% 0, 100% calc(100% - var(--notch)), calc(100% - var(--notch)) 100%, 0 100%, 0 var(--notch));
+    --clip-sm:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--white);font-family:'Barlow',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(rgba(47,68,84,.25) 1px,transparent 1px);background-size:34px 34px;}
+  h1,h2,h3,.bebas{font-family:'Bebas Neue',sans-serif;}
+
+  /* HEADER */
+  .sticky-top{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 1px 0 rgba(255,70,85,.25);}
+  .header{padding:16px 18px 14px;max-width:920px;margin:0 auto;}
+  .header-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .wordmark{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,8vw,50px);line-height:.9;letter-spacing:.2em;display:flex;align-items:center;}
+  .wordmark .v{color:var(--cream);} .wordmark .a{color:var(--red);} .wordmark .l{color:var(--cream);} .wordmark .o{color:var(--teal);}
+  .subtitle{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-top:5px;font-weight:600;}
+
+  /* PROGRAM SWITCHER */
+  .prog-switch{display:flex;gap:6px;align-items:center;}
+  .prog-btn{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.12em;padding:6px 14px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;transition:all .18s ease;clip-path:var(--clip-sm);}
+  .prog-btn:hover{color:var(--dim);border-color:#3f576a;}
+  .prog-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+  .prog-btn[data-prog="mesos"].active{background:var(--teal);border-color:var(--teal);color:#06231f;}
+
+  /* SETUP ROW */
+  .setup{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:16px;}
+  @media(max-width:560px){.setup{grid-template-columns:repeat(2,1fr);}}
+  .setup label{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-weight:700;}
+  .setup input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--white);padding:7px 10px;font-size:13px;font-family:'Barlow',sans-serif;clip-path:var(--clip-sm);}
+  .setup input:focus{outline:none;border-color:var(--red);background:var(--card2);}
+
+  /* PROGRESS BAR */
+  .progress-wrap{display:flex;align-items:center;gap:12px;margin-top:16px;}
+  .progress-track{flex:1;height:8px;background:var(--card);overflow:hidden;clip-path:var(--clip-sm);border:1px solid var(--border);}
+  .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--gold));transition:width .35s ease;}
+  .progress-label{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.06em;color:var(--cream);white-space:nowrap;}
+
+  /* MAIN */
+  .main{padding:20px 18px;max-width:920px;margin:0 auto;}
+  .view{display:none;} .view.active{display:block;}
+
+  /* DAY PICKER */
+  .week-block{margin-bottom:26px;}
+  .week-head{position:relative;display:flex;align-items:baseline;gap:11px;margin-bottom:13px;padding-bottom:9px;}
+  .week-head::after{content:"";position:absolute;left:0;bottom:0;width:100%;height:1px;background:linear-gradient(90deg,var(--red) 0,var(--red) 46px,var(--border) 46px,var(--border) 100%);}
+  .week-head .wk{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;color:var(--red);}
+  .week-head .wk-focus{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+  .day-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:9px;}
+  .day-cell{position:relative;background:var(--card);border-top:2px solid var(--red);padding:11px 9px 12px;text-align:left;cursor:pointer;transition:transform .12s ease,background .2s ease,box-shadow .2s ease;min-height:84px;display:flex;flex-direction:column;clip-path:var(--clip);}
+  .day-cell:hover{background:var(--card2);transform:translateY(-2px);box-shadow:0 6px 16px rgba(255,70,85,.18);}
+  .day-cell .d-num{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:.85;color:var(--cream);}
+  .day-cell .d-day{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700;}
+  .day-cell .d-focus{font-size:11px;color:var(--dim);margin-top:7px;line-height:1.25;font-weight:500;}
+  .day-cell.done{border-top-color:var(--green);background:rgba(78,214,161,.09);}
+  .day-cell.done .d-num{color:var(--green);}
+  .day-cell .check{position:absolute;top:8px;right:9px;width:16px;height:16px;border:1px solid var(--border);font-size:10px;display:flex;align-items:center;justify-content:center;color:transparent;clip-path:var(--clip-sm);}
+  .day-cell.done .check{background:var(--green);border-color:var(--green);color:var(--bg);}
+
+  /* DETAIL TOP ROW */
+  .detail-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+  .back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer;padding:9px 13px;clip-path:var(--clip-sm);transition:all .18s ease;}
+  .back-btn:hover{color:var(--cream);border-color:var(--red);}
+  .jump{position:relative;flex:1;min-width:190px;}
+  .jump input{width:100%;background:var(--card);border:1px solid var(--border);color:var(--white);padding:9px 12px 9px 30px;font-size:13px;font-family:'Barlow',sans-serif;clip-path:var(--clip-sm);}
+  .jump input:focus{outline:none;border-color:var(--teal);background:var(--card2);}
+  .jump::before{content:"⌕";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none;}
+
+  /* DETAIL HEAD */
+  .detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:4px;}
+  .detail-title .d-eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);font-weight:700;}
+  .detail-title h2{font-size:38px;letter-spacing:.04em;line-height:1;margin-top:4px;color:var(--cream);}
+  .complete-btn{font-family:'Bebas Neue',sans-serif;background:var(--cream);border:1px solid var(--cream);color:#0f1923;font-size:17px;letter-spacing:.08em;padding:9px 18px;cursor:pointer;white-space:nowrap;transition:all .18s ease;clip-path:var(--clip-sm);}
+  .complete-btn:hover{background:#fff;}
+  .complete-btn.done{background:var(--green);border-color:var(--green);color:#06231f;}
+
+  /* TAB NAV */
+  .tabs{display:flex;gap:5px;margin:18px 0 20px;background:var(--surface);border:1px solid var(--border);padding:5px;clip-path:var(--clip);}
+  .tab{flex:1;padding:11px 8px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.12em;color:var(--muted);cursor:pointer;border:none;background:none;transition:all .18s ease;clip-path:var(--clip-sm);}
+  .tab:hover{color:var(--dim);}
+  .tab.active{background:var(--red);color:#fff;}
+
+  .panel{display:none;} .panel.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  /* CARDS */
+  .card{background:var(--card);padding:15px 17px;margin-bottom:11px;border-left:3px solid var(--teal);clip-path:var(--clip);}
+  .card.red{border-left-color:var(--red);} .card.gold{border-left-color:var(--gold);} .card.green{border-left-color:var(--green);}
+  .card h3{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.06em;color:var(--cream);margin-bottom:6px;display:flex;align-items:center;gap:9px;}
+  .card .tag{font-family:'Barlow',sans-serif;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:2px 7px;clip-path:var(--clip-sm);}
+  .card p{color:var(--dim);font-size:14px;}
+  .card p + p{margin-top:7px;}
+  .card .lead-grid{display:grid;grid-template-columns:auto 1fr;gap:5px 13px;margin-top:9px;font-size:13.5px;}
+  .card .lead-grid b{color:var(--teal);font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:.04em;}
+  .card ul{list-style:none;margin-top:6px;}
+  .card ul li{color:var(--dim);font-size:14px;padding-left:17px;position:relative;margin-bottom:5px;}
+  .card ul li::before{content:"\25B8";position:absolute;left:0;color:var(--red);font-weight:700;}
+  .card ul li b{color:var(--cream);}
+
+  .panel-intro{font-size:13px;color:var(--dim);margin-bottom:15px;line-height:1.55;background:var(--surface);border-left:2px solid var(--muted);padding:12px 15px;clip-path:var(--clip);}
+  .panel-intro b{color:var(--cream);}
+  .section-label{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:6px 0 11px;display:flex;align-items:center;gap:9px;}
+  .section-label::before{content:"";width:9px;height:9px;background:var(--red);clip-path:polygon(0 0,100% 0,100% 100%);}
+
+  .coming-soon{text-align:center;padding:70px 20px;color:var(--muted);}
+  .coming-soon .cs-big{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:.1em;color:var(--teal);}
+  .coming-soon p{margin-top:10px;font-size:14px;}
+
+  .footer{text-align:center;color:var(--muted);font-size:10px;padding:26px 0 34px;letter-spacing:.14em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+
+<div class="sticky-top">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="wordmark"><span class="v">V</span><span class="a">A</span><span class="l">L</span><span class="o">O</span></div>
+        <div class="subtitle" id="subtitle">Slayerkey's SkyHigh Routine · 30-Day Rank-Up</div>
+      </div>
+      <div class="prog-switch">
+        <button class="prog-btn active" data-prog="slayerkey" onclick="switchProgram('slayerkey',this)">Slayerkey</button>
+        <button class="prog-btn" data-prog="mesos" onclick="switchProgram('mesos',this)">Mesos</button>
+      </div>
+    </div>
+
+    <div class="setup" id="setup">
+      <div><label>Current Rank</label><input id="s-rank" placeholder="Gold 2" autocomplete="off"></div>
+      <div><label>30-Day Goal</label><input id="s-goal" placeholder="Platinum" autocomplete="off"></div>
+      <div><label>Main Agent</label><input id="s-agent" placeholder="Pick one" autocomplete="off"></div>
+      <div><label>Start Date</label><input id="s-start" placeholder="Oct 2" autocomplete="off"></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+      <div class="progress-label" id="progLabel">0 / 30</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- DAY PICKER -->
+  <div class="view active" id="view-picker"></div>
+
+  <!-- DAY DETAIL -->
+  <div class="view" id="view-detail">
+    <div class="detail-top">
+      <button class="back-btn" onclick="showPicker()">‹ All Days</button>
+      <div class="jump">
+        <input id="daySearch" list="dayList" placeholder="Jump to a day…" autocomplete="off">
+        <datalist id="dayList"></datalist>
+      </div>
+    </div>
+    <div class="detail-head">
+      <div class="detail-title">
+        <div class="d-eyebrow" id="d-eyebrow"></div>
+        <h2 id="d-title"></h2>
+      </div>
+      <button class="complete-btn" id="completeBtn" onclick="toggleComplete()">Mark Complete</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="warmup" onclick="showTab('warmup',this)">Warm Up</button>
+      <button class="tab" data-tab="ingame" onclick="showTab('ingame',this)">In Game</button>
+      <button class="tab" data-tab="training" onclick="showTab('training',this)">Training</button>
+    </div>
+    <div class="panel active" id="panel-warmup"></div>
+    <div class="panel" id="panel-ingame"></div>
+    <div class="panel" id="panel-training"></div>
+  </div>
+
+  <div class="footer">clarity beats volume · complete today, come back tomorrow</div>
+</div>
+
+<script>
+/* ---------------- DATA: SLAYERKEY ---------------- */
+const WEEKS = [
+  { n:1, focus:"Fundamentals", days:[1,2,3,4,5,6,7] },
+  { n:2, focus:"Fighting Style", days:[8,9,10,11,12,13,14] },
+  { n:3, focus:"Game Sense", days:[15,16,17,18,19,20,21] },
+  { n:4, focus:"Mental", days:[22,23,24,25,26,27,28] },
+  { n:5, focus:"Finish the Loop", label:"Days 29–30", days:[29,30] },
+];
+
+const SLAYERKEY_DAYS = {
+  1:{t:"Pick Your Agent", a:"Choose one agent you enjoy or have wanted to learn. Commit to that agent for the routine instead of changing after bad games."},
+  2:{t:"Review Your Tracker", a:"Look at games played and win rate first. If you have 20+ games this act or last act, identify which maps are costing you the most."},
+  3:{t:"Find a Duo", a:"Find someone around your rank who actually wants to improve. Prioritize consistency and shared goals over finding a “perfect” teammate."},
+  4:{t:"Build Your Game-Day Routine", a:"Decide what you do before playing, how you warm up, how many games you usually play, what happens after a bad block, and how you review."},
+  5:{t:"Rule of 2", a:"Use the Rule of 2 in every round. Down by 2: look for a fight. Up by 2: play off your teammates."},
+  6:{t:"2SS Fighting", a:"Practice two-shot burst, strafe, two-shot burst, strafe. Focus on staying accurate without becoming stationary."},
+  7:{t:"LEAD Method", a:"At the start of every round, ask what the last round, economy, abilities, and direction tell you about the plan."},
+  8:{t:"2SS Baseline", a:"Slow it down. Make the burst-stop-strafe rhythm clean before trying to make it fast."},
+  9:{t:"Crosshair Placement", a:"Every time you enter space, ask where someone can appear and prepare your crosshair before they do."},
+  10:{t:"2SS Under Pressure", a:"Use 2SS in DM without falling back into panic spraying every time someone shoots first."},
+  11:{t:"Find the Next Player", a:"After every kill, immediately ask where the next enemy is most likely to appear. Use audio, minimap, and teammate information."},
+  12:{t:"Flick + Microadjust", a:"Add short clock-flick or bot work. Prioritize getting the crosshair onto the head before shooting, not just raw speed."},
+  13:{t:"Combine the Pieces", a:"Crosshair placement before contact, 2SS during the fight, then instantly prepare for the next threat."},
+  14:{t:"Fighting Review", a:"Review one bad match or a few lost fights. Find the repeated problem: preparation, crosshair, movement, panic spray, or poor fight odds."},
+  15:{t:"Study a Pro VOD", a:"Watch a strong player on your agent. Pause when they reposition or fight and ask what information made that choice make sense."},
+  16:{t:"Minimap", a:"Use the minimap to predict space, teammates, missing enemies, and where the next fight is forming."},
+  17:{t:"Review Your Own VOD", a:"Review your own POV. Focus on what you actually knew at the moment, not what is obvious with hindsight."},
+  18:{t:"Abilities", a:"Before fights, ask which abilities can create an advantage, deny space, force movement, or help a teammate swing."},
+  19:{t:"Review Another Player's VOD", a:"Review another player's VOD on your agent or around your rank. Compare their decisions to yours and look for ideas you can test in your own games."},
+  20:{t:"Teammates + Timings", a:"Ask where teammates can help you, where enemies are likely to be occupied, and when a fight becomes stronger because of timing."},
+  21:{t:"Study a Pro VOD Again", a:"Return to a pro on your agent and compare what you notice now versus Day 15."},
+  22:{t:"Notice Your Triggers", a:"Write down what usually knocks you out of flow: mistakes, teammates, scoreline, losing duels, rank pressure, or something else."},
+  23:{t:"Understand Yourself", a:"When you make a mistake, replace “I'm playing terrible” with a specific observation you can use."},
+  24:{t:"Understand Teammates", a:"Stop spending attention on what a teammate should have done. Ask what the current situation lets you do now."},
+  25:{t:"Your Future-Rank Self", a:"Ask: “How would the version of me who already reached my goal rank think about this situation?” Then act like that player."},
+  26:{t:"Is This Helping?", a:"Audit your practice. Keep the parts that transfer into ranked. Remove the parts that only make you feel productive."},
+  27:{t:"Tilt Recovery", a:"Decide your stop rule before queueing. If you are no longer learning or thinking clearly, reset instead of forcing another game."},
+  28:{t:"Mental Review", a:"Read your notes from the week. Identify one mental pattern that helps you and one that repeatedly hurts you."},
+  29:{t:"Final Review", a:"Review one recent match. Compare your fighting, decisions, awareness, and mental to the beginning of the month. Write down the single biggest change."},
+  30:{t:"Build Your Next 30 Days", a:"Check your rank, Tracker, notes, and VODs. Pick the next problem that matters most. Keep the game-day loop and start a new cycle instead of going back to random grinding."},
+};
+
+// Weekly intro note shown in In Game (by week number)
+const WEEK_NOTE = {
+  2:"Daily base: 1 Sheriff DM focused on crosshair placement and clean first shots + 1 Vandal DM focused on 2SS. Refresh your normal warm-up and add clock-flick practice when useful.",
+  3:"This week is about creating better fights without needing better mechanics. Your four lenses are: <b>minimap, abilities, teammates, and timings.</b>",
+  4:"Journal before and after you play. <b>Before:</b> How do I feel right now? <b>After:</b> What did I experience, and what do I want to do differently next time?",
+};
+
+const CHECKIN_DAYS = {7:true,14:true,21:true,28:true};
+
+const WARMUP_DRILLS = [
+  { n:"2SS Practice", d:"Two-shot burst, strafe, two-shot burst, strafe. Build the rhythm before you build the speed." },
+  { n:"2SS — Standing Bots", d:"Run your 2SS on standing bots. Clean bursts, reset the crosshair between each." },
+  { n:"Medium Bots — Strafing", d:"Medium-range bots. Keep moving: fire your bursts while strafing, not planted." },
+  { n:"Eliminate 50 — Strafe Bots", d:"Eliminate 50 on strafing bots, strafing the whole time. Accurate, not stationary." },
+];
+
+const STUDY_OPTIONS = [
+  "VOD review","Customs","Duo practice","Entry practice","One pro VOD on your agent",
+];
+
+const DETAIL_ID = "slayerkey"; // active program
+
+/* ---------------- STATE ---------------- */
+let state = { completed:[], setup:{} };
+let selectedDay = null;
+
+function weekOf(day){ return WEEKS.find(w => w.days.includes(day)); }
+function focusKeyword(day){ return SLAYERKEY_DAYS[day] ? SLAYERKEY_DAYS[day].t : ""; }
+function dayLabel(d){ return `Day ${d} — ${SLAYERKEY_DAYS[d].t}`; }
+
+/* ---------------- INDEXEDDB (store: progress) ---------------- */
+const DB = (() => {
+  let dbp;
+  function open(){
+    if(dbp) return dbp;
+    dbp = new Promise((res,rej)=>{
+      const r = indexedDB.open("valo",1);
+      r.onupgradeneeded = e => {
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains("progress")) db.createObjectStore("progress",{keyPath:"id"});
+      };
+      r.onsuccess = e => res(e.target.result);
+      r.onerror = e => rej(e.target.error);
+    });
+    return dbp;
+  }
+  async function get(id){
+    const db = await open();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction("progress","readonly").objectStore("progress").get(id);
+      tx.onsuccess = ()=>res(tx.result||null);
+      tx.onerror = ()=>rej(tx.error);
+    });
+  }
+  async function put(rec){
+    const db = await open();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction("progress","readwrite").objectStore("progress").put(rec);
+      tx.onsuccess = ()=>res();
+      tx.onerror = ()=>rej(tx.error);
+    });
+  }
+  return { get, put };
+})();
+
+async function loadState(){
+  try{
+    const rec = await DB.get(DETAIL_ID);
+    if(rec){ state.completed = rec.completed||[]; state.setup = rec.setup||{}; }
+  }catch(e){ console.warn("IDB load failed",e); }
+  const map = {rank:"s-rank",goal:"s-goal",agent:"s-agent",start:"s-start"};
+  Object.entries(map).forEach(([k,id])=>{ if(state.setup[k]) document.getElementById(id).value = state.setup[k]; });
+}
+async function saveState(){
+  try{ await DB.put({ id:DETAIL_ID, completed:state.completed, setup:state.setup }); }
+  catch(e){ console.warn("IDB save failed",e); }
+}
+
+/* ---------------- RENDER: PICKER ---------------- */
+function renderPicker(){
+  const root = document.getElementById("view-picker");
+  root.innerHTML = WEEKS.map(w=>`
+    <div class="week-block">
+      <div class="week-head">
+        <span class="wk">${w.label||("Week "+w.n)}</span>
+        <span class="wk-focus">${w.focus}</span>
+      </div>
+      <div class="day-grid">
+        ${w.days.map(d=>{
+          const done = state.completed.includes(d);
+          return `<button class="day-cell ${done?'done':''}" onclick="openDay(${d})">
+            <span class="check">✓</span>
+            <span class="d-day">Day</span>
+            <span class="d-num">${d}</span>
+            <span class="d-focus">${focusKeyword(d)}</span>
+          </button>`;
+        }).join("")}
+      </div>
+    </div>`).join("");
+  updateProgress();
+}
+
+function updateProgress(){
+  const n = state.completed.length;
+  document.getElementById("progFill").style.width = (n/30*100)+"%";
+  document.getElementById("progLabel").textContent = n+" / 30";
+}
+
+/* ---------------- RENDER: DETAIL ---------------- */
+function openDay(day){
+  selectedDay = day;
+  const info = SLAYERKEY_DAYS[day];
+  const w = weekOf(day);
+  document.getElementById("d-eyebrow").textContent = `Day ${day} · ${w.label||("Week "+w.n)} · ${w.focus}`;
+  document.getElementById("d-title").textContent = info.t;
+  document.getElementById("daySearch").value = "";
+  document.getElementById("daySearch").placeholder = `Now: Day ${day} — jump to another…`;
+  renderWarmup();
+  renderInGame(day,info,w);
+  renderTraining(day,w);
+  showTab("ingame", document.querySelector('.tab[data-tab="ingame"]'));
+  syncCompleteBtn();
+  document.getElementById("view-picker").classList.remove("active");
+  document.getElementById("view-detail").classList.add("active");
+  window.scrollTo({top:0,behavior:"instant"});
+}
+
+function renderWarmup(){
+  document.getElementById("panel-warmup").innerHTML = `
+    <div class="panel-intro">Same warm-up every day. Build the rhythm first, speed second — then at minimum one Deathmatch before Competitive.</div>
+    <div class="section-label">Slayerkey Warm-Up</div>
+    ${WARMUP_DRILLS.map(x=>`<div class="card"><h3>${x.n}</h3><p>${x.d}</p></div>`).join("")}`;
+}
+
+function renderInGame(day,info,w){
+  let html = "";
+  html += `<div class="section-label">Today's Goal</div>
+    <div class="card red"><h3>${info.t}</h3><p>${info.a}</p></div>`;
+  if(WEEK_NOTE[w.n]) html += `<div class="panel-intro">${WEEK_NOTE[w.n]}</div>`;
+  if(CHECKIN_DAYS[day]){
+    html += `<div class="card gold"><h3>Weekly Check-In <span class="tag">end of week</span></h3>
+      <ul>
+        <li>What improved this week?</li>
+        <li>What mistake keeps repeating?</li>
+        <li>What is the ONE focus for next week?</li>
+        <li>Do I need outside feedback to see what I am missing?</li>
+      </ul></div>`;
+  }
+  html += `<div class="section-label">Reference</div>
+    <div class="card"><h3>Rule of 2</h3>
+      <ul><li><b>Down by 2:</b> look for a fight.</li><li><b>Up by 2:</b> play off your teammates.</li></ul></div>
+    <div class="card"><h3>LEAD Method</h3>
+      <p>At the start of every round, ask what each of these tells you about the plan:</p>
+      <div class="lead-grid">
+        <b>L</b><span>Last round — what did they do?</span>
+        <b>E</b><span>Economy — what can each side buy?</span>
+        <b>A</b><span>Abilities — what's up, what's spent?</span>
+        <b>D</b><span>Direction — where is the round going?</span>
+      </div></div>
+    <div class="card"><h3>2SS</h3><p>Two-shot burst, strafe, two-shot burst, strafe. Stay accurate without becoming stationary.</p></div>
+    <div class="section-label">Game-Day Loop</div>
+    <div class="card green"><h3>Prep → Play → Reset</h3>
+      <ul>
+        <li><b>Prep:</b> pick one focus for the session.</li>
+        <li><b>Play:</b> ~2–3 Competitive games. Same agent, same 1–2 goals — don't rebuild the plan after one bad game.</li>
+        <li><b>Reset:</b> short break. How am I doing on what I said I'd work on? What could I do differently?</li>
+      </ul></div>`;
+  document.getElementById("panel-ingame").innerHTML = html;
+}
+
+function renderTraining(day,w){
+  let html = `<div class="panel-intro">The Study block — only if you have time. One useful block, not random homework.</div>`;
+  const isVodDay = [15,17,19,21].includes(day);
+  if(isVodDay){
+    html += `<div class="section-label">Today Is A Study Day</div>
+      <div class="card red"><h3>${SLAYERKEY_DAYS[day].t}</h3><p>${SLAYERKEY_DAYS[day].a}</p></div>`;
+  }
+  html += `<div class="section-label">Pick One</div>`;
+  html += STUDY_OPTIONS.map(o=>`<div class="card"><h3>${o}</h3></div>`).join("");
+  document.getElementById("panel-training").innerHTML = html;
+}
+
+/* ---------------- TABS / NAV ---------------- */
+function showTab(id, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+function showPicker(){
+  document.getElementById("view-detail").classList.remove("active");
+  document.getElementById("view-picker").classList.add("active");
+  window.scrollTo({top:0,behavior:"instant"});
+}
+
+/* ---------------- DAY JUMP (searchable) ---------------- */
+function buildDayList(){
+  document.getElementById("dayList").innerHTML =
+    Object.keys(SLAYERKEY_DAYS).map(d=>`<option value="${dayLabel(d)}"></option>`).join("");
+}
+function handleJump(){
+  const el = document.getElementById("daySearch");
+  const v = el.value.trim();
+  if(!v) return;
+  let match = Object.keys(SLAYERKEY_DAYS).find(d => dayLabel(d) === v);
+  if(!match){
+    const num = v.match(/\d+/);
+    if(num && SLAYERKEY_DAYS[num[0]]) match = num[0];
+  }
+  if(!match){
+    const low = v.toLowerCase();
+    match = Object.keys(SLAYERKEY_DAYS).find(d => SLAYERKEY_DAYS[d].t.toLowerCase().includes(low));
+  }
+  if(match) openDay(Number(match)); else el.value = "";
+}
+
+/* ---------------- COMPLETE ---------------- */
+function syncCompleteBtn(){
+  const done = state.completed.includes(selectedDay);
+  const btn = document.getElementById("completeBtn");
+  btn.classList.toggle("done",done);
+  btn.textContent = done ? "✓ Completed" : "Mark Complete";
+}
+async function toggleComplete(){
+  const i = state.completed.indexOf(selectedDay);
+  if(i>=0) state.completed.splice(i,1); else state.completed.push(selectedDay);
+  syncCompleteBtn();
+  renderPicker();
+  await saveState();
+}
+
+/* ---------------- SETUP INPUTS ---------------- */
+["rank","goal","agent","start"].forEach(k=>{
+  document.getElementById("s-"+k).addEventListener("input",e=>{
+    state.setup[k]=e.target.value; saveState();
+  });
+});
+
+/* ---------------- PROGRAM SWITCHER ---------------- */
+function switchProgram(prog, btn){
+  document.querySelectorAll('.prog-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(prog==="mesos"){
+    document.getElementById("subtitle").textContent = "Mesos Plan · based on your improvement doc";
+    document.getElementById("view-picker").innerHTML =
+      `<div class="coming-soon"><div class="cs-big">Mesos — Coming Soon</div>
+       <p>v2 will add your 7-drill warm-up, if-then plans, KovaaK's drills,<br>and Voltaic benchmark tracking.</p></div>`;
+    document.getElementById("view-detail").classList.remove("active");
+    document.getElementById("view-picker").classList.add("active");
+  } else {
+    document.getElementById("subtitle").textContent = "Slayerkey's SkyHigh Routine · 30-Day Rank-Up";
+    renderPicker();
+    showPicker();
+  }
+}
+
+/* ---------------- SCROLL SHADOW ---------------- */
+window.addEventListener('scroll',()=>{document.querySelector('.sticky-top').classList.toggle('scrolled',window.scrollY>40);});
+
+/* ---------------- INIT ---------------- */
+(async function init(){
+  await loadState();
+  buildDayList();
+  document.getElementById("daySearch").addEventListener("change",handleJump);
+  renderPicker();
+})();
+</script>
+</body>
+</html>
